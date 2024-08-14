@@ -8,7 +8,7 @@ body:
     value: |
       **Guidelines:**
 
-      - Make sure this is not a duplicate issue by [checking here](https://github.com/h4ckd0tm3/DiscordChatExporterPy-hikari/issues?q=is%3Aissue).
+      - Make sure this is not a duplicate issue by [checking here](https://github.com/EgehanKilicarslan/Hikari-ChatExporter/issues?q=is%3Aissue).
       - Include one bug per issue, please create multiple issues for each individual bug you find.
       - Please provide an appropriate title related to your issue, for example: "Missing 'Component' for 'Message' Object".
       - Please be descriptive and provide as much detail as possible, it'll save a lot of time for the both of us in trying to reproduce the issue.
@@ -24,8 +24,8 @@ body:
 - type: input
   attributes:
     label: Discord Version
-    description: What version of discord.py (or fork) version are you using?
-    placeholder: discord.py ver X.Y.Z (`pip show discord.py`)
+    description: What version of hikari (or fork) version are you using?
+    placeholder: hikari ver X.Y.Z (`pip show hikari`)
   validations:
     required: true
 

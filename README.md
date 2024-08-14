@@ -8,7 +8,7 @@
 [![GPL License][license-shield]][license-url]
 
 
-  <h2>DiscordChatExporterPy-hikari</h2>
+  <h2>Hikari-ChatExporter</h2>
 
   <p>
     Export Discord chats with your hikari bots!
@@ -21,12 +21,12 @@
 
 To install the library to your virtual environment, for bot usage, run the command:
 ```sh 
-pip install chat-exporter-hikari
+pip install hikari-chat-exporter
 ```
 
 To clone the repository locally, run the command:
 ```sh
-git clone https://github.com/h4ckd0tm3/DiscordChatExporterPy-hikari
+git clone https://github.com/EgehanKilicarslan/Hikari-ChatExporter
 ```
 
 <p align="right">(<a href="#top">back to top</a>)</p>
@@ -60,16 +60,22 @@ import lightbulb
 import chat_exporter
 
 
-bot = lightbulb.BotApp(token="...")
+bot = hikari.GatewayBot(token="...")
+client = lightbulb.client_from_app(bot)
+bot.subscribe(hikari.StartingEvent, client.start)
 
 ...
 
-@bot.command
-@lightbulb.command("save", "Saves current chat transcript.")
-@lightbulb.implements(lightbulb.SlashCommand)
-async def save(ctx):
-    await chat_exporter.quick_export(ctx.get_channel())
-    await ctx.respond("Transcript created!")
+@client.register
+class Save(
+    lightbulb.SlashCommand, 
+    name="save",
+    description="Saves current chat transcript."
+):
+    @lightbulb.invoke
+    async def invoke(self, ctx: lightbulb.Context) -> None:
+        await chat_exporter.quick_export(ctx.interaction.get_channel())
+        await ctx.respond("Transcript created!")
 
 ...
 ```
@@ -100,27 +106,44 @@ This would be the main function to use within chat-exporter.
 **Example:**
 ```python
 import io
+import hikari
+import lightbulb
+import chat_exporter
+
+
+bot = hikari.GatewayBot(token="...")
+client = lightbulb.client_from_app(bot)
+bot.subscribe(hikari.StartingEvent, client.start)
 
 ...
 
-@bot.command
-@lightbulb.command("save", "Saves current chat transcript.")
-@lightbulb.implements(lightbulb.SlashCommand)
-async def save(ctx, limit: int = 100, tz_info: str = "UTC", military_time: bool = True):
-    channel = ctx.get_channel()
-    transcript = await chat_exporter.export(
-        channel,
-        limit=limit,
-        tz_info=tz_info,
-        military_time=military_time,
-        bot=lightbulb.BotApp)
+@client.register
+class Save(
+    lightbulb.SlashCommand, 
+    name="save",
+    description="Saves current chat transcript."
+):
+    @lightbulb.invoke
+    async def invoke(self, ctx: lightbulb.Context) -> None:
+        limit: int = 100
+        tz_info: str = "UTC"
+        military_time: bool = True
+        channel = ctx.interaction.get_channel()
 
-    if transcript is None:
-        return
+        transcript = await chat_exporter.export(
+            channel,
+            limit=limit,
+            tz_info=tz_info,
+            military_time=military_time,
+            bot=bot
+        )
 
-    transcript_file = hikari.files.Bytes(io.BytesIO(transcript.encode()), f"transcript-{channel.name}.html")
+        if transcript is None:
+            return
 
-    await ctx.respond(transcript_file)
+        transcript_file = hikari.files.Bytes(io.BytesIO(transcript.encode()), f"transcript-{channel.name}.html")
+
+        await ctx.respond(transcript_file)
 ```
 </details>
 <details><summary><b>Raw Usage</b></summary>
@@ -147,30 +170,44 @@ This would be for people who want to filter what content to export.
 **Example:**
 ```python
 import io
+import hikari
+import lightbulb
+import chat_exporter
+
+
+bot = hikari.GatewayBot(token="...")
+client = lightbulb.client_from_app(bot)
+bot.subscribe(hikari.StartingEvent, client.start)
 
 ...
 
-@bot.command
-@lightbulb.command("save", "Saves current chat transcript.")
-@lightbulb.implements(lightbulb.SlashCommand)
-async def save(ctx, tz_info: str = "UTC", military_time: bool = True):
-    channel = ctx.get_channel()
-    
-    messages = ...
-    
-    transcript = await chat_exporter.raw_export(
-        channel,
-        messages=messages,
-        tz_info=tz_info,
-        military_time=military_time,
-        bot=lightbulb.BotApp)
+@client.register
+class Save(
+    lightbulb.SlashCommand, 
+    name="save",
+    description="Saves current chat transcript."
+):
+    @lightbulb.invoke
+    async def invoke(self, ctx: lightbulb.Context) -> None:
+        tz_info: str = "UTC"
+        military_time: bool = True
+        channel = ctx.interaction.get_channel()
+        messages = bot.rest.fetch_messages(channel)
 
-    if transcript is None:
-        return
+        transcript = await chat_exporter.raw_export(
+            channel,
+            messages=messages,
+            tz_info=tz_info,
+            military_time=military_time,
+            bot=bot
+        )
 
-    transcript_file = hikari.files.Bytes(io.BytesIO(transcript.encode()), f"transcript-{channel.name}.html")
+        if transcript is None:
+            return
 
-    await ctx.respond(transcript_file)
+        transcript_file = hikari.files.Bytes(io.BytesIO(transcript.encode()), f"transcript-{channel.name}.html")
+
+        await ctx.respond(transcript_file)
 ```
 </details>
 
@@ -182,10 +219,10 @@ async def save(ctx, tz_info: str = "UTC", military_time: bool = True):
 <details><summary><b>General</b></summary>
 <ol>
     <details><summary>Discord</summary>
-    <img src="https://raw.githubusercontent.com/h4ckd0tm3/DiscordChatExporterPy-hikari/master/.screenshots/channel_output.png">
+    <img src="https://raw.githubusercontent.com/EgehanKilicarslan/Hikari-ChatExporter/master/.screenshots/channel_output.png">
     </details>
     <details><summary>Chat-Exporter</summary>
-    <img src="https://raw.githubusercontent.com/h4ckd0tm3/DiscordChatExporterPy-hikari/master/.screenshots/html_output.png">
+    <img src="https://raw.githubusercontent.com/EgehanKilicarslan/Hikari-ChatExporter/master/.screenshots/html_output.png">
     </details>
 </ol>
 </details>
@@ -212,14 +249,28 @@ Similar in design to `.quick_export()` this is a bit of a demo function to produ
 
 **Example:**
 ```python
+import hikari
+import lightbulb
 import chat_exporter
+
+
+bot = hikari.GatewayBot(token="...")
+client = lightbulb.client_from_app(bot)
+bot.subscribe(hikari.StartingEvent, client.start)
 
 ...
 
-@bot.command()
-async def save(ctx: commands.Context):
-    message = await chat_exporter.quick_export(ctx.channel)
-    await chat_exporter.quick_link(ctx.channel, message)
+@client.register
+class Save(
+    lightbulb.SlashCommand, 
+    name="save",
+    description="Saves current chat transcript."
+):
+    @lightbulb.invoke
+    async def invoke(self, ctx: lightbulb.Context) -> None:
+        channel = ctx.interaction.get_channel()
+        message = await chat_exporter.quick_export(channel)
+        await chat_exporter.quick_link(channel, message)
 ```
 </details>
 
@@ -235,27 +286,40 @@ A simple function to return the link you will need to view the transcript online
 **Example:**
 ```python
 import io
-
+import hikari
+import lightbulb
 import chat_exporter
+
+
+bot = hikari.GatewayBot(token="...")
+client = lightbulb.client_from_app(bot)
+bot.subscribe(hikari.StartingEvent, client.start)
 
 ...
 
-@bot.command()
-async def save(ctx: commands.Context):
-    transcript = await chat_exporter.export(ctx.channel)
+@client.register
+class Save(
+    lightbulb.SlashCommand, 
+    name="save",
+    description="Saves current chat transcript."
+):
+    @lightbulb.invoke
+    async def invoke(self, ctx: lightbulb.Context) -> None:
+        channel = ctx.interaction.get_channel()
+        transcript = await chat_exporter.export(channel)
     
-    if transcript is None:
-        return
+        if transcript is None:
+            return
 
-    transcript_file = discord.File(
-        io.BytesIO(transcript.encode()),
-        filename=f"transcript-{ctx.channel.name}.html",
-    )
+        transcript_file = hikari.File(
+            io.BytesIO(transcript.encode()),
+            filename=f"transcript-{channel.name}.html",
+        )
 
-    message = await ctx.send(file=transcript_file)
-    link = await chat_exporter.link(message)
+        message = await ctx.respond(attachment=transcript_file)
+        link = await chat_exporter.link(message)
 
-    await ctx.send("Click this link to view the transcript online: " + link)
+        await ctx.respond("Click this link to view the transcript online: " + link)
 ```
 </details>
 </ol>
@@ -274,15 +338,15 @@ It simply makes a request to the given URL and echos (prints) the content for yo
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 <!-- LINK DUMP -->
-[pypi-version]: https://img.shields.io/pypi/v/chat-exporter-hikari?style=for-the-badge
-[pypi-url]: https://pypi.org/project/chat-exporter-hikari/
-[language-dom]: https://img.shields.io/github/languages/top/h4ckd0tm3/DiscordChatExporterPy-hikari?style=for-the-badge
-[forks-shield]: https://img.shields.io/github/forks/h4ckd0tm3/DiscordChatExporterPy-hikari?style=for-the-badge
-[forks-url]: https://github.com/h4ckd0tm3/DiscordChatExporterPy-hikari/
-[stars-shield]: https://img.shields.io/github/stars/h4ckd0tm3/DiscordChatExporterPy-hikari?style=for-the-badge
-[stars-url]: https://github.com/h4ckd0tm3/DiscordChatExporterPy-hikari/stargazers
-[issues-shield]: https://img.shields.io/github/issues/h4ckd0tm3/DiscordChatExporterPy-hikari?style=for-the-badge
-[issues-url]: https://github.com/h4ckd0tm3/DiscordChatExporterPy-hikari/issues
-[license-shield]: https://img.shields.io/github/license/h4ckd0tm3/DiscordChatExporterPy-hikari?style=for-the-badge
-[license-url]: https://github.com/h4ckd0tm3/DiscordChatExporterPy-hikari/blob/master/LICENSE
-[github-url]: https://github.com/h4ckd0tm3/DiscordChatExporterPy-hikari/
+[pypi-version]: https://img.shields.io/pypi/v/hikari-char-exporter?style=for-the-badge
+[pypi-url]: https://pypi.org/project/hikari-char-exporter/
+[language-dom]: https://img.shields.io/github/languages/top/EgehanKilicarslan/Hikari-ChatExporter?style=for-the-badge
+[forks-shield]: https://img.shields.io/github/forks/EgehanKilicarslan/Hikari-ChatExporter?style=for-the-badge
+[forks-url]: https://github.com/EgehanKilicarslan/Hikari-ChatExporter/
+[stars-shield]: https://img.shields.io/github/stars/EgehanKilicarslan/Hikari-ChatExporter?style=for-the-badge
+[stars-url]: https://github.com/EgehanKilicarslan/Hikari-ChatExporter/stargazers
+[issues-shield]: https://img.shields.io/github/issues/EgehanKilicarslan/Hikari-ChatExporter?style=for-the-badge
+[issues-url]: https://github.com/EgehanKilicarslan/Hikari-ChatExporter/issues
+[license-shield]: https://img.shields.io/github/license/EgehanKilicarslan/Hikari-ChatExporter?style=for-the-badge
+[license-url]: https://github.com/EgehanKilicarslan/Hikari-ChatExporter/blob/master/LICENSE
+[github-url]: https://github.com/EgehanKilicarslan/Hikari-ChatExporter/
