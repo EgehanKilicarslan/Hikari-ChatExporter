@@ -338,8 +338,8 @@ It simply makes a request to the given URL and echos (prints) the content for yo
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 <!-- LINK DUMP -->
-[pypi-version]: https://img.shields.io/pypi/v/hikari-char-exporter?style=for-the-badge
-[pypi-url]: https://pypi.org/project/hikari-char-exporter/
+[pypi-version]: https://img.shields.io/pypi/v/hikari-chat-exporter?style=for-the-badge
+[pypi-url]: https://pypi.org/project/hikari-chat-exporter/
 [language-dom]: https://img.shields.io/github/languages/top/EgehanKilicarslan/Hikari-ChatExporter?style=for-the-badge
 [forks-shield]: https://img.shields.io/github/forks/EgehanKilicarslan/Hikari-ChatExporter?style=for-the-badge
 [forks-url]: https://github.com/EgehanKilicarslan/Hikari-ChatExporter/
