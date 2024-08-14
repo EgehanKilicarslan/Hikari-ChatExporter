@@ -10,16 +10,12 @@ readme = "README.md"
 authors = [
     { name="Egehan Kılıçarslan", email="contact@egehankilicarslan.me" }
 ]
-requires-python = ">=3.6"
+requires-python = ">=3.10"
 license = { text = "GPL-3.0-only" }
 classifiers = [
     "Operating System :: OS Independent",
     "Intended Audience :: Developers",
     "Natural Language :: English",
-    "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
