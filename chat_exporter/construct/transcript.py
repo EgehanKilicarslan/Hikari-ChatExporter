@@ -100,7 +100,7 @@ class TranscriptDAO:
         channel_creation_time = self.channel.created_at.astimezone(timezone).strftime("%b %d, %Y (%T)")
 
         raw_channel_topic = (
-            self.channel.topic if isinstance(self.channel, hikari.channels.TextableChannel) and self.channel.topic else ""
+            self.channel.topic if isinstance(self.channel, hikari.channels.TextableChannel) and not isinstance(self.channel, hikari.channels.GuildThreadChannel) and self.channel.topic else ""
         )
 
         channel_topic_html = ""
@@ -121,7 +121,7 @@ class TranscriptDAO:
 
         sd = (
             '<div class="meta__support">'
-            '    <a href="https://ko-fi.com/mahtoid">DONATE</a>'
+            '    <a href="https://ko-fi.com/egehankilicarslan">DONATE</a>'
             '</div>'
         ) if self.support_dev else ""
 
