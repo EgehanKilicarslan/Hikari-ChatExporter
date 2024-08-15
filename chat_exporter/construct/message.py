@@ -190,7 +190,7 @@ class MessageConstruct:
         self.message.interaction = await fill_out(self.guild, message_interaction, [
             ("AVATAR_URL", str(avatar_url), PARSE_MODE_NONE),
             ("BOT_TAG", is_bot, PARSE_MODE_NONE),
-            ("NAME_TAG", "%s#%s" % (user.global_name, user.discriminator), PARSE_MODE_NONE),
+            ("NAME_TAG", "%s#%s" % (user.username, user.discriminator), PARSE_MODE_NONE),
             ("NAME", str(html.escape(user.username))),
             ("USER_COLOUR", user_colour, PARSE_MODE_NONE),
             ("FILLER", "used ", PARSE_MODE_NONE),
