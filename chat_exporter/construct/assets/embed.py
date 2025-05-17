@@ -1,11 +1,16 @@
 import html
+from typing import Any
 
-from chat_exporter.ext.discord_import import hikari
+import hikari
 
 from chat_exporter.ext.html_generator import (
-    fill_out,
+    PARSE_MODE_EMBED,
+    PARSE_MODE_MARKDOWN,
+    PARSE_MODE_NONE,
+    PARSE_MODE_SPECIAL_EMBED,
+    embed_author,
+    embed_author_icon,
     embed_body,
-    embed_title,
     embed_description,
     embed_field,
     embed_field_inline,
@@ -13,27 +18,22 @@ from chat_exporter.ext.html_generator import (
     embed_footer_icon,
     embed_image,
     embed_thumbnail,
-    embed_author,
-    embed_author_icon,
-    PARSE_MODE_NONE,
-    PARSE_MODE_EMBED,
-    PARSE_MODE_MARKDOWN,
-    PARSE_MODE_SPECIAL_EMBED,
+    embed_title,
+    fill_out,
 )
 
-modules_which_use_none = ["nextcord", "disnake"]
 
-
-def _gather_checker():
-    if hikari.module not in modules_which_use_none:
-        return hikari.embeds.Embed()
-    return None
+def _gather_checker() -> hikari.Embed:
+    """Return an empty Embed for comparison purposes."""
+    return hikari.Embed()
 
 
 class Embed:
-    r: str
-    g: str
-    b: str
+    """Process hikari.Embed objects into HTML representation."""
+
+    r: int
+    g: int
+    b: int
     title: str
     description: str
     author: str
@@ -42,15 +42,42 @@ class Embed:
     footer: str
     fields: str
 
-    check_against = None
+    embed: hikari.Embed
+    guild: hikari.Guild
+    check_against: hikari.Embed
 
-    def __init__(self, embed, guild):
-        self.embed: hikari.embeds.Embed = embed
-        self.guild: hikari.guilds.Guild = guild
+    def __init__(self, embed: hikari.Embed, guild: hikari.Guild) -> None:
+        """Initialize the Embed processor.
 
-    async def flow(self):
+        Args:
+            embed: The hikari Embed object to process
+            guild: The guild context for the embed
+        """
+        self.embed = embed
+        self.guild = guild
+        self.check_against: hikari.Embed  # Will be initialized in flow()
+
+        # Initialize with default values
+        self.r = 0x20
+        self.g = 0x22
+        self.b = 0x25
+        self.title = ""
+        self.description = ""
+        self.author = ""
+        self.image = ""
+        self.thumbnail = ""
+        self.footer = ""
+        self.fields = ""
+
+    async def flow(self) -> Any:
+        """Process the embed through all building stages.
+
+        Returns:
+            The processed embed result
+        """
         self.check_against = _gather_checker()
-        self.build_colour()
+
+        self.build_color()
         await self.build_title()
         await self.build_description()
         await self.build_fields()
@@ -62,101 +89,204 @@ class Embed:
 
         return self.embed
 
-    def build_colour(self):
-        self.r, self.g, self. b = self.embed.color.rgb \
-            if self.embed.color != self.check_against.color \
-            else (0x20, 0x22, 0x25)  # default colour
+    def build_color(self) -> None:
+        """Set RGB values from embed color or use default."""
+        if self.embed.color and self.embed.color != self.check_against.color:
+            self.r = self.embed.color.rgb[0]
+            self.g = self.embed.color.rgb[1]
+            self.b = self.embed.color.rgb[2]
 
-    async def build_title(self):
-        self.title = html.escape(self.embed.title) if self.embed.title != self.check_against.title else ""
+    async def build_title(self) -> None:
+        """Process and format the embed title."""
+        if not self.embed.title:
+            return
 
-        if self.title:
-            self.title = await fill_out(self.guild, embed_title, [
-                ("EMBED_TITLE", self.title, PARSE_MODE_MARKDOWN)
-            ])
+        if self.embed.title != self.check_against.title:
+            escaped_title = html.escape(self.embed.title)
+            self.title = await fill_out(
+                self.guild, embed_title, [("EMBED_TITLE", escaped_title, PARSE_MODE_MARKDOWN)]
+            )
 
-    async def build_description(self):
-        self.description = html.escape(self.embed.description) if self.embed.description != self.check_against.description else ""
+    async def build_description(self) -> None:
+        """Process and format the embed description."""
+        if not self.embed.description:
+            return
 
-        if self.description:
-            self.description = await fill_out(self.guild, embed_description, [
-                ("EMBED_DESC", self.embed.description, PARSE_MODE_EMBED)
-            ])
+        if self.embed.description != self.check_against.description:
+            # Using original descriptor as PARSE_MODE_EMBED will handle escaping
+            self.description = await fill_out(
+                self.guild,
+                embed_description,
+                [("EMBED_DESC", self.embed.description, PARSE_MODE_EMBED)],
+            )
 
-    async def build_fields(self):
+    async def build_fields(self) -> None:
+        """Process and format the embed fields."""
         self.fields = ""
-
-        # This does not have to be here, but Pycord.
         if not self.embed.fields:
             return
 
+        fields_html = []
         for field in self.embed.fields:
-            field.name = html.escape(field.name)
-            field.value = html.escape(field.value)
+            escaped_name = html.escape(field.name)
+            escaped_value = html.escape(field.value)
+            template = embed_field_inline if field.is_inline else embed_field
 
-            if field.is_inline:
-                self.fields += await fill_out(self.guild, embed_field_inline, [
-                    ("FIELD_NAME", field.name, PARSE_MODE_SPECIAL_EMBED),
-                    ("FIELD_VALUE", field.value, PARSE_MODE_EMBED)
-                ])
-            else:
-                self.fields += await fill_out(self.guild, embed_field, [
-                    ("FIELD_NAME", field.name, PARSE_MODE_SPECIAL_EMBED),
-                    ("FIELD_VALUE", field.value, PARSE_MODE_EMBED)])
+            field_html = await fill_out(
+                self.guild,
+                template,
+                [
+                    ("FIELD_NAME", escaped_name, PARSE_MODE_SPECIAL_EMBED),
+                    ("FIELD_VALUE", escaped_value, PARSE_MODE_EMBED),
+                ],
+            )
+            fields_html.append(field_html)
 
-    async def build_author(self):
-        self.author = html.escape(self.embed.author.name) if self.embed.author != self.check_against.author else ""
+        self.fields = "".join(fields_html)
 
-        self.author = f'<a class="chatlog__embed-author-name-link" href="{self.embed.author.url}">{self.author}</a>' \
-            if self.embed.author != self.check_against.author \
-            else self.author
+    async def build_author(self) -> None:
+        """Process and format the embed author information."""
+        self.author = ""
 
-        author_icon = await fill_out(self.guild, embed_author_icon, [
-            ("AUTHOR", self.author, PARSE_MODE_NONE),
-            ("AUTHOR_ICON", self.embed.author.icon.proxy_url, PARSE_MODE_NONE)
-        ]) if self.embed.author and self.embed.author.icon else ""
-
-        if author_icon == "" and self.author != "":
-            self.author = await fill_out(self.guild, embed_author, [("AUTHOR", self.author, PARSE_MODE_NONE)])
-        else:
-            self.author = author_icon
-
-    async def build_image(self):
-        self.image = await fill_out(self.guild, embed_image, [
-            ("EMBED_IMAGE", str(self.embed.image.proxy_url), PARSE_MODE_NONE)
-        ]) if self.embed.image != self.check_against.image else ""
-
-    async def build_thumbnail(self):
-        self.thumbnail = await fill_out(self.guild, embed_thumbnail, [
-            ("EMBED_THUMBNAIL", str(self.embed.thumbnail.proxy_url), PARSE_MODE_NONE)]) \
-            if self.embed.thumbnail != self.check_against.thumbnail else ""
-
-    async def build_footer(self):
-        self.footer = html.escape(self.embed.footer.text) if self.embed.footer != self.check_against.footer else ""
-        footer_icon = self.embed.footer.icon.proxy_url if self.embed.footer != self.check_against.footer else None
-
-        if not self.footer:
+        # Skip if no author information
+        if not self.embed.author or not self.embed.author.name:
             return
 
-        if footer_icon is not None:
-            self.footer = await fill_out(self.guild, embed_footer_icon, [
-                ("EMBED_FOOTER", self.footer, PARSE_MODE_NONE),
-                ("EMBED_FOOTER_ICON", footer_icon, PARSE_MODE_NONE)
-            ])
-        else:
-            self.footer = await fill_out(self.guild, embed_footer, [
-                ("EMBED_FOOTER", self.footer, PARSE_MODE_NONE)])
+        if self.check_against.author and self.embed.author.name == self.check_against.author.name:
+            return
 
-    async def build_embed(self):
-        self.embed = await fill_out(self.guild, embed_body, [
-            ("EMBED_R", str(self.r)),
-            ("EMBED_G", str(self.g)),
-            ("EMBED_B", str(self.b)),
-            ("EMBED_AUTHOR", self.author, PARSE_MODE_NONE),
-            ("EMBED_TITLE", self.title, PARSE_MODE_NONE),
-            ("EMBED_IMAGE", self.image, PARSE_MODE_NONE),
-            ("EMBED_THUMBNAIL", self.thumbnail, PARSE_MODE_NONE),
-            ("EMBED_DESC", self.description, PARSE_MODE_NONE),
-            ("EMBED_FIELDS", self.fields, PARSE_MODE_NONE),
-            ("EMBED_FOOTER", self.footer, PARSE_MODE_NONE),
-        ])
+        # Process author name
+        self.author = html.escape(self.embed.author.name)
+
+        # Add URL if available
+        if self.embed.author.url and (
+            not self.check_against.author or self.embed.author.url != self.check_against.author.url
+        ):
+            self.author = f'<a class="chatlog__embed-author-name-link" href="{self.embed.author.url}">{self.author}</a>'
+
+        # Handle author icon - add proper null check for icon attribute
+        has_icon = (
+            self.embed.author.icon
+            and self.embed.author.icon.url
+            and (
+                not self.check_against.author
+                or not self.check_against.author.icon
+                or self.embed.author.icon.url != self.check_against.author.icon.url
+            )
+        )
+
+        if has_icon and self.embed.author.icon:  # Ensure icon is still available
+            icon_url = str(self.embed.author.icon.url)
+            self.author = await fill_out(
+                self.guild,
+                embed_author_icon,
+                [
+                    ("AUTHOR", self.author, PARSE_MODE_NONE),
+                    ("AUTHOR_ICON", icon_url, PARSE_MODE_NONE),
+                ],
+            )
+        else:
+            self.author = await fill_out(
+                self.guild, embed_author, [("AUTHOR", self.author, PARSE_MODE_NONE)]
+            )
+
+    async def build_image(self) -> None:
+        """Process and format the embed image."""
+        self.image = ""
+
+        if not self.embed.image or not self.embed.image.url:
+            return
+
+        if (
+            self.check_against.image
+            and self.check_against.image.url
+            and self.embed.image.url == self.check_against.image.url
+        ):
+            return
+
+        # Use proxy_url if available, otherwise use url
+        image_url = str(self.embed.image.proxy_url or self.embed.image.url)
+
+        self.image = await fill_out(
+            self.guild,
+            embed_image,
+            [("EMBED_IMAGE", image_url, PARSE_MODE_NONE)],
+        )
+
+    async def build_thumbnail(self) -> None:
+        """Process and format the embed thumbnail."""
+        self.thumbnail = ""
+
+        if not self.embed.thumbnail or not self.embed.thumbnail.url:
+            return
+
+        if (
+            self.check_against.thumbnail
+            and self.embed.thumbnail.url == self.check_against.thumbnail.url
+        ):
+            return
+
+        self.thumbnail = await fill_out(
+            self.guild,
+            embed_thumbnail,
+            [("EMBED_THUMBNAIL", str(self.embed.thumbnail.url), PARSE_MODE_NONE)],
+        )
+
+    async def build_footer(self) -> None:
+        """Process and format the embed footer."""
+        self.footer = ""
+
+        if not self.embed.footer or not self.embed.footer.text:
+            return
+
+        if self.check_against.footer and self.embed.footer.text == self.check_against.footer.text:
+            return
+
+        self.footer = html.escape(self.embed.footer.text)
+
+        # Add footer icon if available - add proper null check for icon attribute
+        has_icon = (
+            self.embed.footer.icon
+            and self.embed.footer.icon.url
+            and (
+                not self.check_against.footer
+                or not self.check_against.footer.icon
+                or self.embed.footer.icon.url != self.check_against.footer.icon.url
+            )
+        )
+
+        if (
+            has_icon and self.embed.footer.icon
+        ):  # Additional check to ensure icon is still available
+            icon_url = str(self.embed.footer.icon.url)
+            self.footer = await fill_out(
+                self.guild,
+                embed_footer_icon,
+                [
+                    ("EMBED_FOOTER", self.footer, PARSE_MODE_NONE),
+                    ("EMBED_FOOTER_ICON", icon_url, PARSE_MODE_NONE),
+                ],
+            )
+        else:
+            self.footer = await fill_out(
+                self.guild, embed_footer, [("EMBED_FOOTER", self.footer, PARSE_MODE_NONE)]
+            )
+
+    async def build_embed(self) -> None:
+        """Build the final embed structure."""
+        self.embed = await fill_out(
+            self.guild,
+            embed_body,
+            [
+                ("EMBED_R", str(self.r)),
+                ("EMBED_G", str(self.g)),
+                ("EMBED_B", str(self.b)),
+                ("EMBED_AUTHOR", self.author, PARSE_MODE_NONE),
+                ("EMBED_TITLE", self.title, PARSE_MODE_NONE),
+                ("EMBED_IMAGE", self.image, PARSE_MODE_NONE),
+                ("EMBED_THUMBNAIL", self.thumbnail, PARSE_MODE_NONE),
+                ("EMBED_DESC", self.description, PARSE_MODE_NONE),
+                ("EMBED_FIELDS", self.fields, PARSE_MODE_NONE),
+                ("EMBED_FOOTER", self.footer, PARSE_MODE_NONE),
+            ],
+        )

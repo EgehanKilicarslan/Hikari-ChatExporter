@@ -1,7 +1,9 @@
+import html
+import json
 import os
 
-from chat_exporter.parse.mention import ParseMention
 from chat_exporter.parse.markdown import ParseMarkdown
+from chat_exporter.parse.mention import ParseMention
 
 dir_path = os.path.abspath(os.path.join((os.path.dirname(os.path.realpath(__file__))), ".."))
 
@@ -12,6 +14,7 @@ PARSE_MODE_EMBED = 3
 PARSE_MODE_SPECIAL_EMBED = 4
 PARSE_MODE_REFERENCE = 5
 PARSE_MODE_EMOJI = 6
+PARSE_MODE_HTML_SAFE = 7
 
 
 async def fill_out(guild, base, replacements):
@@ -34,8 +37,13 @@ async def fill_out(guild, base, replacements):
             v = await ParseMarkdown(v).message_reference_flow()
         elif mode == PARSE_MODE_EMOJI:
             v = await ParseMarkdown(v).special_emoji_flow()
+        elif mode == PARSE_MODE_HTML_SAFE:
+            # escape html characters
+            v = html.escape(str(v) if v is not None else "", quote=True)
+            # escape characters that could be used for xss
+            v = json.dumps(v, ensure_ascii=False)[1:-1]
 
-        base = base.replace("{{" + k + "}}", v)
+        base = base.replace("{{" + k + "}}", str(v or "").strip())
 
     return base
 
@@ -55,6 +63,8 @@ message_reference = read_file(dir_path + "/html/message/reference.html")
 message_interaction = read_file(dir_path + "/html/message/interaction.html")
 message_pin = read_file(dir_path + "/html/message/pin.html")
 message_thread = read_file(dir_path + "/html/message/thread.html")
+message_thread_remove = read_file(dir_path + "/html/message/thread_remove.html")
+message_thread_add = read_file(dir_path + "/html/message/thread_add.html")
 message_reference_unknown = read_file(dir_path + "/html/message/reference_unknown.html")
 message_body = read_file(dir_path + "/html/message/message.html")
 end_message = read_file(dir_path + "/html/message/end.html")
@@ -64,7 +74,9 @@ meta_data_temp = read_file(dir_path + "/html/message/meta.html")
 component_button = read_file(dir_path + "/html/component/component_button.html")
 component_menu = read_file(dir_path + "/html/component/component_menu.html")
 component_menu_options = read_file(dir_path + "/html/component/component_menu_options.html")
-component_menu_options_emoji = read_file(dir_path + "/html/component/component_menu_options_emoji.html")
+component_menu_options_emoji = read_file(
+    dir_path + "/html/component/component_menu_options_emoji.html"
+)
 
 # EMBED
 embed_body = read_file(dir_path + "/html/embed/body.html")

@@ -7,7 +7,6 @@
 [![Issues][issues-shield]][issues-url]
 [![GPL License][license-shield]][license-url]
 
-
   <h2>Hikari-ChatExporter</h2>
 
   <p>
@@ -17,14 +16,17 @@
 </div>
 
 ---
+
 ## Installation
 
 To install the library to your virtual environment, for bot usage, run the command:
-```sh 
+
+```sh
 pip install hikari-chat-exporter
 ```
 
 To clone the repository locally, run the command:
+
 ```sh
 git clone https://github.com/EgehanKilicarslan/Hikari-ChatExporter
 ```
@@ -32,17 +34,19 @@ git clone https://github.com/EgehanKilicarslan/Hikari-ChatExporter
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 ---
+
 ## Usage
 
 There are currently 3 methods (functions) to `chat-exporter` which you can use to export your chat.<br/>
 _Expand the blocks below to learn the functions, arguments and usages._
+
 <details><summary><b>Basic Usage</b></summary>
 
 `.quick_export()` is the simplest way of using chat-exporter.
 
 Using the _quick_export_ function will gather the history of the channel you give, build the transcript then post the file and embed directly to the channel - returning a message object gathered from the message it posted.
 
-This is mostly seen as a demo function, as opposed to a command you should actually use. 
+This is mostly seen as a demo function, as opposed to a command you should actually use.
 
 **Required Argument(s):**<br/>
 `channel`: `hikari.channels.PartialChannel` object, whether `ctx.channel` or any channel you gather.
@@ -54,6 +58,7 @@ This is mostly seen as a demo function, as opposed to a command you should actua
 `hikari.messages.Message`: The message _quick_export_ will send, containing the embed and exported chat file.
 
 **Example:**
+
 ```python
 import hikari
 import lightbulb
@@ -68,7 +73,7 @@ bot.subscribe(hikari.StartingEvent, client.start)
 
 @client.register
 class Save(
-    lightbulb.SlashCommand, 
+    lightbulb.SlashCommand,
     name="save",
     description="Saves current chat transcript."
 ):
@@ -104,6 +109,7 @@ This would be the main function to use within chat-exporter.
 `transcript`: The HTML build-up for you to construct the HTML File with Discord.
 
 **Example:**
+
 ```python
 import io
 import hikari
@@ -119,7 +125,7 @@ bot.subscribe(hikari.StartingEvent, client.start)
 
 @client.register
 class Save(
-    lightbulb.SlashCommand, 
+    lightbulb.SlashCommand,
     name="save",
     description="Saves current chat transcript."
 ):
@@ -145,6 +151,7 @@ class Save(
 
         await ctx.respond(transcript_file)
 ```
+
 </details>
 <details><summary><b>Raw Usage</b></summary>
 
@@ -168,6 +175,7 @@ This would be for people who want to filter what content to export.
 `transcript`: The HTML build-up for you to construct the HTML File with Discord.
 
 **Example:**
+
 ```python
 import io
 import hikari
@@ -183,7 +191,7 @@ bot.subscribe(hikari.StartingEvent, client.start)
 
 @client.register
 class Save(
-    lightbulb.SlashCommand, 
+    lightbulb.SlashCommand,
     name="save",
     description="Saves current chat transcript."
 ):
@@ -209,11 +217,13 @@ class Save(
 
         await ctx.respond(transcript_file)
 ```
+
 </details>
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 ---
+
 ## Screenshots
 
 <details><summary><b>General</b></summary>
@@ -228,14 +238,15 @@ class Save(
 </details>
 <p align="right">(<a href="#top">back to top</a>)</p>
 
-
 ---
+
 ## Additional Functions
 
 <details><summary><b>Link Function</b></summary>
 Downloading exported chats can build up a bunch of unwanted files on your PC which can get annoying, additionally - not everyone wants to download content from Discord.
 
 Due to these pain, and many requests - I have built a fancy PHP script which will show the transcript file within a browser.<br/>
+
 <ol>
 <details><summary>quick_link</summary>
 Similar in design to `.quick_export()` this is a bit of a demo function to produce a link and to give you an embed.
@@ -248,6 +259,7 @@ Similar in design to `.quick_export()` this is a bit of a demo function to produ
 `hikari.messages.Message`: The message _quick_link_ will send, containing the embed.
 
 **Example:**
+
 ```python
 import hikari
 import lightbulb
@@ -262,7 +274,7 @@ bot.subscribe(hikari.StartingEvent, client.start)
 
 @client.register
 class Save(
-    lightbulb.SlashCommand, 
+    lightbulb.SlashCommand,
     name="save",
     description="Saves current chat transcript."
 ):
@@ -272,6 +284,7 @@ class Save(
         message = await chat_exporter.quick_export(channel)
         await chat_exporter.quick_link(channel, message)
 ```
+
 </details>
 
 <details><summary>link</summary>
@@ -284,6 +297,7 @@ A simple function to return the link you will need to view the transcript online
 `link`: The link to view the transcript file online
 
 **Example:**
+
 ```python
 import io
 import hikari
@@ -299,7 +313,7 @@ bot.subscribe(hikari.StartingEvent, client.start)
 
 @client.register
 class Save(
-    lightbulb.SlashCommand, 
+    lightbulb.SlashCommand,
     name="save",
     description="Saves current chat transcript."
 ):
@@ -307,7 +321,7 @@ class Save(
     async def invoke(self, ctx: lightbulb.Context) -> None:
         channel = ctx.interaction.get_channel()
         transcript = await chat_exporter.export(channel)
-    
+
         if transcript is None:
             return
 
@@ -321,6 +335,7 @@ class Save(
 
         await ctx.respond("Click this link to view the transcript online: " + link)
 ```
+
 </details>
 </ol>
 
@@ -330,14 +345,17 @@ It simply makes a request to the given URL and echos (prints) the content for yo
 </details>
 
 ---
+
 ## Attributions
 
-*This project borrows CSS and HTML code from [Tyrrrz's C# DiscordChatExporter](https://github.com/Tyrrrz/DiscordChatExporter/) repository.*
+_This project borrows CSS and HTML code from [Tyrrrz's C# DiscordChatExporter](https://github.com/Tyrrrz/DiscordChatExporter/) repository._
 
-*This project is based on [DiscordChatExporterPy](https://github.com/mahtoid/DiscordChatExporterPy), the work of [mahtoid](https://github.com/mahtoid).*
+_This project is based on [DiscordChatExporterPy](https://github.com/mahtoid/DiscordChatExporterPy), the work of [mahtoid](https://github.com/mahtoid)._
+
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 <!-- LINK DUMP -->
+
 [pypi-version]: https://img.shields.io/pypi/v/hikari-chat-exporter?style=for-the-badge
 [pypi-url]: https://pypi.org/project/hikari-chat-exporter/
 [language-dom]: https://img.shields.io/github/languages/top/EgehanKilicarslan/Hikari-ChatExporter?style=for-the-badge
