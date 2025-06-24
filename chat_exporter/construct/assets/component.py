@@ -17,16 +17,16 @@ from chat_exporter.ext.html_generator import (
 
 class Component:
     styles: dict[str, str] = {
-        "primary": "#5865F2",
-        "secondary": "#4F545C",
-        "success": "#2D7D46",
-        "danger": "#D83C3E",
-        "blurple": "#5865F2",
-        "grey": "#4F545C",
-        "gray": "#4F545C",
-        "green": "#2D7D46",
-        "red": "#D83C3E",
-        "link": "#4F545C",
+        "PRIMARY": "#5865F2",
+        "SECONDARY": "#4F545C",
+        "SUCCESS": "#2D7D46",
+        "DANGER": "#D83C3E",
+        "BLURPLE": "#5865F2",
+        "GREY": "#4F545C",
+        "GRAY": "#4F545C",
+        "GREEN": "#2D7D46",
+        "RED": "#D83C3E",
+        "LINK": "#4F545C",
     }
 
     components: str = ""
@@ -58,7 +58,7 @@ class Component:
             icon: str = ""
 
         label: str = str(c.label) if c.label else ""
-        style: str = self.styles[str(c.style).split(".")[1]]
+        style: str = self.styles[str(c.style)]
         emoji: str = str(c.emoji) if c.emoji else ""
 
         self.buttons += await fill_out(
